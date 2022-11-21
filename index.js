@@ -5,10 +5,25 @@
  * @param {Object} newman - The collection run object, with event hooks for reporting run details.
  * @param {Object} options - A set of collection run options.
  * @param {String} options.export - The path to which the report object must be written.
+ * @param options.emptyonerror - Output is empty on failed scenarios.
+ * @param options.stats - Include also 'stats' dict in the output report.
  * @returns {*}
  */
 
-function createLightSummary(rawDetail) {
+const my = require('./package.json');
+const prog = 'NR-' + my.name.slice(16) + '@' + my.version;
+
+function info(...msg) {
+  console.log('INFO::' + prog, ...msg);
+}
+
+function err(...msg) {
+  console.log('ERR::' + prog, ...msg);
+}
+
+info('module loaded')
+
+function createLightSummary(rawDetail, options) {
   let collection = {};
   Object.assign(collection, {
     'id': rawDetail.collection.id,
@@ -64,34 +79,39 @@ function createLightSummary(rawDetail) {
     });
   });
 
-  var lightSummary = {}
-  Object.assign(lightSummary, {
+  var ret = {};
+  Object.assign(ret, {
     'collection': collection,
     'environment': rawDetail.environment.name,
-/*    'run': {
-      'stats': rawDetail.run.stats,
-    }*/
     'executions': executions,
     'orig': rawDetail,
   });
-  return lightSummary
+  if (options.stats)
+    Object.assign(ret, {
+      'stats': rawDetail.run.stats,
+    });
+  return ret;
 }
 
 module.exports = function (newman, options) {
   newman.on('beforeDone', function (err, o) {
-    /* if (err) return; */
-    console.log('nr-json-steps', options, err);
+    info(options, err);
+    if (options.jsonStepsEmptyonerror && err) {
+      info('stops on error:', err);
+      return;
+    }
     try {
       newman.exports.push({
         name: 'json-steps-reporter',
         default: 'newman-step-results.json',
         path: options.jsonStepsExport,
-        content: createLightSummary(o.summary)
+        content: createLightSummary(o.summary, options)
       });
     }
     catch (e) {
-      console.log('ERR::nr-json-steps', e);
+      err(e);
       throw e;
     }
+    info('finished');
   });
 };
