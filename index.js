@@ -5,7 +5,6 @@
  * @param {Object} newman - The collection run object, with event hooks for reporting run details.
  * @param {Object} options - A set of collection run options.
  * @param {String} options.export - The path to which the report object must be written.
- * @param options.emptyonerror - Output is empty on failed scenarios.
  * @param options.stats - Include also 'stats' dict in the output report.
  * @returns {*}
  */
@@ -20,8 +19,6 @@ function info(...msg) {
 function err(...msg) {
   console.log('ERR::' + prog, ...msg);
 }
-
-info('module loaded')
 
 function createLightSummary(rawDetail, options) {
   let collection = {};
@@ -86,7 +83,7 @@ function createLightSummary(rawDetail, options) {
     'executions': executions,
     'orig': rawDetail,
   });
-  if (options.stats)
+  if (options.jsonStepsStats)
     Object.assign(ret, {
       'stats': rawDetail.run.stats,
     });
@@ -95,8 +92,8 @@ function createLightSummary(rawDetail, options) {
 
 module.exports = function (newman, options) {
   newman.on('beforeDone', function (err, o) {
-    info(options, err);
-    if (options.jsonStepsEmptyonerror && err) {
+    info(options);
+    if (err) {
       info('stops on error:', err);
       return;
     }

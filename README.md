@@ -10,10 +10,12 @@ Thanks for inspiration in many other json exports.
 
 ## Output structure
 
+[Structures described.](https://github.com/postmanlabs/newman#newmanruncallbackerror-object--summary-object)
+
 ## Options
 
 Option | Value | Optional
 -- | -- | --
 --reporter-json-steps-export | <path/to/generate/json/report> | Yes
 
-*By default the report is generated in `newman` subfolder of current working directory.* 
+*By default the report is generated in `newman` subfolder of current working directory.*
