@@ -10,33 +10,28 @@
  */
 
 const my = require('./package.json');
-const prog = 'NR-' + my.name.slice(16) + '@' + my.version;
+const prog = 'NR-json-steps@' + my.version;
 
 function info(...msg) {
   console.log('INFO::' + prog, ...msg);
 }
 
-function err(...msg) {
+function error(...msg) {
   console.log('ERR::' + prog, ...msg);
 }
 
 function createLightSummary(rawDetail, options) {
-  let collection = {};
-  Object.assign(collection, {
-    'id': rawDetail.collection.id,
+  let detail = {};
+  Object.assign(detail, {
     'name': rawDetail.collection.name,
-    'events': rawDetail.collection.events,
-    'variables': rawDetail.collection.variables,
-    'itemCount': rawDetail.collection.items.members.length,
-    'items': rawDetail.collection.items.members,
+    'description': rawDetail.collection.description.content,
+    'env': rawDetail.environment.name
   });
 
-  let executions = [];
-
-  rawDetail.run.executions.forEach(function (executionReport) {
+  let steps = [];
+  rawDetail.run.executions.forEach(function (exec) {
     let assertions = [];
-    executionReport.assertions.forEach(function (assertionReport) {
-
+    exec.assertions.forEach(function (assertionReport) {
       assertions.push({
         'name': assertionReport.assertion,
         'skipped': assertionReport.skipped,
@@ -44,6 +39,31 @@ function createLightSummary(rawDetail, options) {
         'errorMessage': assertionReport.error ? assertionReport.error.message : undefined
       });
     });
+    let step = {};
+    Object.assign(step, {
+      'name': exec.item.name,
+      'request': exec.request,
+      'requestError': exec.requestError,
+      'assertions': assertions,
+    });
+    if (exec.requestError == undefined && exec.response) {
+      let response = {
+        'body': exec.response.stream.toString('utf8'),
+        'duration': exec.response.responseTime,
+        'headers': exec.response.header,
+        'code': exec.response.code,
+        'status': exec.response.status,
+      }
+      Object.assign(step, {
+        'response': response,
+      });
+    }
+    steps.push(step);
+  });
+
+  let executions = [];
+
+  rawDetail.run.executions.forEach(function (executionReport) {
 
     let requestError = executionReport.requestError;
     let responseBody = undefined;
@@ -72,16 +92,13 @@ function createLightSummary(rawDetail, options) {
         'status': executionReport.response ? executionReport.response.status: undefined,
         'body': responseBody,
       } : undefined,
-      'assertions': assertions,
     });
   });
 
   var ret = {};
   Object.assign(ret, {
-    'collection': collection,
-    'environment': rawDetail.environment.name,
-    'executions': executions,
-    'orig': rawDetail,
+    'info': detail,
+    'steps': steps,
   });
   if (options.jsonStepsStats)
     Object.assign(ret, {
@@ -106,7 +123,7 @@ module.exports = function (newman, options) {
       });
     }
     catch (e) {
-      err(e);
+      error(e);
       throw e;
     }
     info('finished');
