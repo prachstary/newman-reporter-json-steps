@@ -20,11 +20,24 @@ function error(...msg) {
   console.log('ERR::' + prog, ...msg);
 }
 
+function scrapeDescription(x) {
+  var ret = (x.type === 'text/plain') ? x.content : undefined;
+  return ret;
+}
+
+function compactHeaders(allHeaders) {
+  var h = {};
+  allHeaders.members.forEach(function (x) {
+    h[x.key] = x.value;
+  });
+  return h;
+}
+
 function createLightSummary(rawDetail, options) {
   let detail = {};
   Object.assign(detail, {
     'name': rawDetail.collection.name,
-    'description': rawDetail.collection.description.content,
+    'description': scrapeDescription(rawDetail.collection.description),
     'env': rawDetail.environment.name
   });
 
@@ -40,59 +53,38 @@ function createLightSummary(rawDetail, options) {
       });
     });
     let step = {};
+    let request = {};
+    Object.assign(request, {
+      'url': exec.request.url.toString(),
+      'method': exec.request.method,
+      'header': compactHeaders(exec.request.headers),
+      'body': exec.request.body.raw,
+    });
+    if (exec.requestError)
+      Object.assign(request, {
+        'error': exec.requestError
+      });
     Object.assign(step, {
       'name': exec.item.name,
-      'request': exec.request,
-      'requestError': exec.requestError,
+      'request': request,
       'assertions': assertions,
     });
     if (exec.requestError == undefined && exec.response) {
       let response = {
         'body': exec.response.stream.toString('utf8'),
         'duration': exec.response.responseTime,
-        'headers': exec.response.header,
+        'header': compactHeaders(exec.response.headers),
         'code': exec.response.code,
         'status': exec.response.status,
       }
+      const CT = response.header['Content-Type'];
+      if (CT && CT.includes('application/json'))
+        response.body = JSON.parse(response.body);
       Object.assign(step, {
         'response': response,
       });
     }
     steps.push(step);
-  });
-
-  let executions = [];
-
-  rawDetail.run.executions.forEach(function (executionReport) {
-
-    let requestError = executionReport.requestError;
-    let responseBody = undefined;
-    if (executionReport.requestError == undefined) {
-      if (executionReport.response)
-        responseBody = executionReport.response.stream;
-      if (executionReport.response.headers) {
-        executionReport.response.headers.members.forEach(function (header) {
-          if (header.key === 'Content-Type') {
-            if (header.value.includes('application/json'))
-              responseBody = JSON.parse(responseBody.toString('utf8'));
-            else
-              responseBody = responseBody.toString('ascii');
-          }
-        });
-      }
-    }
-
-    executions.push({
-      'id': executionReport.id,
-      'request': executionReport.request,
-      'requestError': requestError,
-      'response': responseBody ? {
-        'headers': executionReport.response ? executionReport.response.headers: undefined,
-        'code': executionReport.response ? executionReport.response.code: undefined,
-        'status': executionReport.response ? executionReport.response.status: undefined,
-        'body': responseBody,
-      } : undefined,
-    });
   });
 
   var ret = {};
@@ -108,6 +100,9 @@ function createLightSummary(rawDetail, options) {
 }
 
 module.exports = function (newman, options) {
+  newman.on('beforeItem', function (err, o) {
+    info('beforeItem called');
+  });
   newman.on('beforeDone', function (err, o) {
     info(options);
     if (err) {
