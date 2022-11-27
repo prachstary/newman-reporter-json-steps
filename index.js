@@ -58,12 +58,15 @@ function createLightSummary(rawDetail, options) {
       'url': exec.request.url.toString(),
       'method': exec.request.method,
       'header': compactHeaders(exec.request.headers),
-      'body': exec.request.body.raw,
+      'body': exec.request.body.toString('utf8'),
     });
     if (exec.requestError)
       Object.assign(request, {
         'error': exec.requestError
       });
+    const CTe = request.header['Content-Type'];
+    if (CTe && CTe.includes('application/json'))
+      request.body = JSON.parse(request.body);
     Object.assign(step, {
       'name': exec.item.name,
       'request': request,
@@ -77,8 +80,8 @@ function createLightSummary(rawDetail, options) {
         'code': exec.response.code,
         'status': exec.response.status,
       }
-      const CT = response.header['Content-Type'];
-      if (CT && CT.includes('application/json'))
+      const CTr = response.header['Content-Type'];
+      if (CTr && CTr.includes('application/json'))
         response.body = JSON.parse(response.body);
       Object.assign(step, {
         'response': response,
