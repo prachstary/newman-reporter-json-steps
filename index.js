@@ -39,8 +39,8 @@ function createLightSummary(rawDetail, options) {
     'name': rawDetail.collection.name,
     'description': scrapeDescription(rawDetail.collection.description),
     'env': rawDetail.environment.name,
-    'durationTotal': rawDetail.run.timings.completed - rawDetail.run.timings.started,
-    'startTime': rawDetail.run.timings.started,
+    'duration': rawDetail.run.timings.completed - rawDetail.run.timings.started,
+    'started': rawDetail.run.timings.started,
   });
 
   let steps = [];
