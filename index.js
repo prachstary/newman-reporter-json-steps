@@ -38,7 +38,9 @@ function createLightSummary(rawDetail, options) {
   Object.assign(detail, {
     'name': rawDetail.collection.name,
     'description': scrapeDescription(rawDetail.collection.description),
-    'env': rawDetail.environment.name
+    'env': rawDetail.environment.name,
+    'durationTotal': rawDetail.run.timings.completed - rawDetail.run.timings.started,
+    'startTime': rawDetail.run.timings.started,
   });
 
   let steps = [];
