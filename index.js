@@ -105,11 +105,8 @@ function createLightSummary(rawDetail, options) {
 }
 
 module.exports = function (newman, options) {
-  newman.on('beforeItem', function (err, o) {
-    info('beforeItem called');
-  });
   newman.on('beforeDone', function (err, o) {
-    info(options);
+    // info(options);
     if (err) {
       info('stops on error:', err);
       return;
@@ -126,6 +123,6 @@ module.exports = function (newman, options) {
       error(e);
       throw e;
     }
-    info('finished');
+    // info('finished');
   });
 };
