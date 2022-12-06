@@ -121,7 +121,6 @@ module.exports = function (newman, options) {
     }
     catch (e) {
       error(e);
-      throw e;
     }
     // info('finished');
   });
