@@ -60,7 +60,7 @@ function createLightSummary(rawDetail, options) {
       'url': exec.request.url.toString(),
       'method': exec.request.method,
       'header': compactHeaders(exec.request.headers),
-      'body': exec.request.body.toString('utf8'),
+      'body': exec.request.body ? exec.request.body.toString('utf8'): '',
     });
     if (exec.requestError)
       Object.assign(request, {
