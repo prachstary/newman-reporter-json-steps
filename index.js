@@ -25,6 +25,16 @@ function scrapeDescription(x) {
   return ret;
 }
 
+function convertToJson(body) {
+  // wrapped conversion, not every request/response contains well formed json
+  try {
+    return JSON.parse(body)
+  }
+  catch (e) {
+    return body ? body: '';
+  }
+}
+
 function compactHeaders(allHeaders) {
   var h = {};
   allHeaders.members.forEach(function (x) {
@@ -68,7 +78,7 @@ function createLightSummary(rawDetail, options) {
       });
     const CTe = request.header['Content-Type'];
     if (CTe && CTe.includes('application/json'))
-      request.body = JSON.parse(request.body);
+      request.body = convertToJson(request.body);
     Object.assign(step, {
       'name': exec.item.name,
       'request': request,
@@ -84,7 +94,7 @@ function createLightSummary(rawDetail, options) {
       }
       const CTr = response.header['Content-Type'];
       if (CTr && CTr.includes('application/json'))
-        response.body = JSON.parse(response.body);
+        response.body = convertToJson(response.body);
       Object.assign(step, {
         'response': response,
       });
