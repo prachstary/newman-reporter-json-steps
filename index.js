@@ -96,7 +96,7 @@ function createLightSummary(rawDetail, options) {
       if (CTr && CTr.includes('application/json'))
         response.body = convertToJson(response.body);
       if (CTr && CTr.includes('image/png'))
-        reponse.body = '<<< truncated as image/png content-type >>>';
+        response.body = '<<< truncated as image/png content-type >>>';
       Object.assign(step, {
         'response': response,
       });
