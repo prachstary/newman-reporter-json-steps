@@ -56,14 +56,16 @@ function createLightSummary(rawDetail, options) {
   let steps = [];
   rawDetail.run.executions.forEach(function (exec) {
     let assertions = [];
-    exec.assertions.forEach(function (assertionReport) {
-      assertions.push({
-        'name': assertionReport.assertion,
-        'skipped': assertionReport.skipped,
-        'failed': assertionReport.error !== undefined,
-        'errorMessage': assertionReport.error ? assertionReport.error.message : undefined
+    if(exec.assertions !== undefined) {
+      exec.assertions.forEach(function (assertionReport) {
+        assertions.push({
+          'name': assertionReport.assertion,
+          'skipped': assertionReport.skipped,
+          'failed': assertionReport.error !== undefined,
+          'errorMessage': assertionReport.error ? assertionReport.error.message : undefined
+        });
       });
-    });
+    }
     let step = {};
     let request = {};
     Object.assign(request, {
