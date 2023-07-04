@@ -44,6 +44,16 @@ function compactHeaders(allHeaders) {
   return h;
 }
 
+function formatTimestamp(timestamp) {
+  const date = new Date(timestamp);
+  const offset = date.getTimezoneOffset() * -1;
+  const offsetHours = Math.floor(Math.abs(offset) / 60).toString().padStart(2, '0');
+  const offsetMinutes = (Math.abs(offset) % 60).toString().padStart(2, '0');
+  const offsetSign = offset >= 0 ? '-' : '+';
+
+  return `${date.toISOString().slice(0, -1)}${offsetSign}${offsetHours}:${offsetMinutes}`;
+}
+
 function createLightSummary(rawDetail, options) {
   let detail = {};
   Object.assign(detail, {
@@ -52,6 +62,8 @@ function createLightSummary(rawDetail, options) {
     'env': rawDetail.environment.name,
     'duration': rawDetail.run.timings.completed - rawDetail.run.timings.started,
     'started': rawDetail.run.timings.started,
+    "startDate": `${formatTimestamp(rawDetail.run.timings.started)}`,
+    "finishDate": `${formatTimestamp(rawDetail.run.timings.completed)}`,
   });
 
   let steps = [];
@@ -72,11 +84,16 @@ function createLightSummary(rawDetail, options) {
       failed_details.push(`${exec.item.name} Request Error - ${exec.requestError}`);
     }
     let test_comments = (failed_details.length > 0) ? failed_details.join('\n') : '';
+    var currentTimestamp = Date.now();
+    console.log(currentTimestamp);
+
     Object.assign(step, {
       'testKey': exec.item.name.split(' ')[0],
       'comments': test_comments,
       'status': test_status,
+      'start': `${formatTimestamp(currentTimestamp)}`,
     });
+    // console.log(exec.response);
     steps.push(step);
   });
 
