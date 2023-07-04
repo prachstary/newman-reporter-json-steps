@@ -21,6 +21,7 @@ function error(...msg) {
 }
 
 function scrapeDescription(x) {
+  if (x == undefined) { return undefined; }
   var ret = (x.type === 'text/plain') ? x.content : undefined;
   return ret;
 }
@@ -31,7 +32,7 @@ function convertToJson(body) {
     return JSON.parse(body)
   }
   catch (e) {
-    return body ? body: '';
+    return body ? body : '';
   }
 }
 
@@ -55,66 +56,36 @@ function createLightSummary(rawDetail, options) {
 
   let steps = [];
   rawDetail.run.executions.forEach(function (exec) {
-    let assertions = [];
-    if(exec.assertions !== undefined) {
+    let test_status = 'PASSED';
+    let failed_details = [];
+    if (exec.assertions !== undefined) {
       exec.assertions.forEach(function (assertionReport) {
-        assertions.push({
-          'name': assertionReport.assertion,
-          'skipped': assertionReport.skipped,
-          'failed': assertionReport.error !== undefined,
-          'errorMessage': assertionReport.error ? assertionReport.error.message : undefined
-        });
+        if (assertionReport.error) {
+          test_status = 'FAILED';
+          failed_details.push(`${exec.item.name} - Assertion - ${assertionReport.assertion} FAILED. Detail - ${assertionReport.error.message}`);
+        }
       });
     }
     let step = {};
-    let request = {};
-    Object.assign(request, {
-      'url': exec.request.url.toString(),
-      'method': exec.request.method,
-      'header': compactHeaders(exec.request.headers),
-      'body': exec.request.body ? exec.request.body.toString('utf8'): '',
-    });
-    if (exec.requestError)
-      Object.assign(request, {
-        'error': exec.requestError
-      });
-    const CTe = request.header['Content-Type'];
-    if (CTe && CTe.includes('application/json'))
-      request.body = convertToJson(request.body);
-    Object.assign(step, {
-      'name': exec.item.name,
-      'request': request,
-      'assertions': assertions,
-    });
-    if (exec.requestError == undefined && exec.response) {
-      let response = {
-        'body': exec.response.stream.toString('utf8'),
-        'duration': exec.response.responseTime,
-        'header': compactHeaders(exec.response.headers),
-        'code': exec.response.code,
-        'status': exec.response.status,
-      }
-      const CTr = response.header['Content-Type'];
-      if (CTr && CTr.includes('application/json'))
-        response.body = convertToJson(response.body);
-      if (CTr && CTr.includes('image/png'))
-        response.body = '<<< truncated as image/png content-type >>>';
-      Object.assign(step, {
-        'response': response,
-      });
+    if (exec.requestError) {
+      test_status = 'FAILED';
+      failed_details.push(`${exec.item.name} Request Error - ${exec.requestError}`);
     }
+    let test_comments = (failed_details.length > 0) ? failed_details.join('\n') : '';
+    Object.assign(step, {
+      'testKey': exec.item.name.split(' ')[0],
+      'comments': test_comments,
+      'status': test_status,
+    });
     steps.push(step);
   });
 
   var ret = {};
   Object.assign(ret, {
     'info': detail,
-    'steps': steps,
+    'tests': steps,
   });
-  if (options.jsonStepsStats)
-    Object.assign(ret, {
-      'stats': rawDetail.run.stats,
-    });
+  console.log(ret);
   return ret;
 }
 
@@ -129,7 +100,7 @@ module.exports = function (newman, options) {
       newman.exports.push({
         name: 'json-steps-reporter',
         default: 'newman-step-results.json',
-        path: options.jsonStepsExport,
+        path: options.xrayJsonExport,
         content: createLightSummary(o.summary, options)
       });
     }

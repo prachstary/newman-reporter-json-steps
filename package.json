@@ -1,5 +1,5 @@
 {
-  "name": "newman-reporter-json-steps",
+  "name": "newman-reporter-xray-json",
   "version": "0.2.7",
   "description": "JSON reporter oriented on step results of Newman execution.",
   "main": "index.js",
