@@ -1,6 +1,6 @@
 {
   "name": "newman-reporter-json-steps",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "JSON reporter oriented on step results of Newman execution.",
   "main": "index.js",
   "scripts": {
