@@ -68,13 +68,15 @@ function createLightSummary(rawDetail, options) {
     }
     let step = {};
     let request = {};
-    Object.assign(request, {
-      'url': exec.request.url.toString(),
-      'method': exec.request.method,
-      'header': compactHeaders(exec.request.headers),
-      'body': exec.request.body ? exec.request.body.toString('utf8'): '',
-      'description': exec.request.description ? exec.request.description.toString('utf8'): '',
-    });
+    with (exec.request) {
+      Object.assign(request, {
+        'url': url.toString(),
+        'method': method,
+        'header': compactHeaders(headers),
+        'body': body ? body.toString('utf8'): '',
+        'description': description ? description.toString('utf8'): '',
+      });
+    }
     if (exec.requestError)
       Object.assign(request, {
         'error': exec.requestError
@@ -88,12 +90,14 @@ function createLightSummary(rawDetail, options) {
       'assertions': assertions,
     });
     if (exec.requestError == undefined && exec.response) {
-      let response = {
-        'body': exec.response.stream.toString('utf8'),
-        'duration': exec.response.responseTime,
-        'header': compactHeaders(exec.response.headers),
-        'code': exec.response.code,
-        'status': exec.response.status,
+      with (exec.response) {
+        let response = {
+          'body': stream.toString('utf8'),
+          'duration': responseTime,
+          'header': compactHeaders(headers),
+          'code': code,
+          'status': status,
+        }
       }
       const CTr = response.header['Content-Type'];
       if (CTr && CTr.includes('application/json'))
